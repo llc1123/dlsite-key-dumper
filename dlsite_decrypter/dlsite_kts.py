@@ -3,6 +3,7 @@ from dlsite_decrypter.dlst_package import DlstPackage
 from dlsite_decrypter import crypto_ops
 import os, struct
 
+
 def _decrypt_fileinfo(buf, svckey, iv):
     fileinfo_buf = crypto_ops.decrypt_cbc_cts(svckey, iv, buf)
     return DlstCapsule.CapsuleFileinfo.from_bytes(fileinfo_buf)
@@ -46,24 +47,30 @@ def parse_package(filename, svckey=None, contentkey=None):
 
 
 def export_capsule_content(capsule):
-    return crypto_ops.decrypt_file_from_bytes(capsule.encrypted_content, capsule.key, capsule.iv)
+    return crypto_ops.decrypt_file_from_bytes(
+        capsule.encrypted_content, capsule.key, capsule.iv
+    )
 
 
 def export_package_content(package):
     for s in package.package_storage:
-        if s.filename[:-1] != 'index.bin':
+        if s.filename[:-1] != "index.bin":
             yield (
-             crypto_ops.decrypt_file_from_bytes(s.encrypted_content, package.key, package.iv), s.filename[:-1])
+                crypto_ops.decrypt_file_from_bytes(
+                    s.encrypted_content, package.key, package.iv
+                ),
+                s.filename[:-1],
+            )
 
 
 def is_file_package_from_file(fobj):
     fobj.seek(-4, os.SEEK_END)
-    footer_len = struct.unpack('<I', fobj.read())[0]
+    footer_len = struct.unpack("<I", fobj.read())[0]
     return _check_package_by_footer_size(footer_len)
 
 
 def is_file_package_from_bytes(buf):
-    footer_len = struct.unpack('<I', buf[-4:])[0]
+    footer_len = struct.unpack("<I", buf[-4:])[0]
     return _check_package_by_footer_size(footer_len)
 
 
@@ -72,4 +79,4 @@ def _check_package_by_footer_size(footer_len):
         return True
     if footer_len == 144:
         return False
-    raise RuntimeError('unrecognised footer size %d' % footer_len)
+    raise RuntimeError("unrecognised footer size %d" % footer_len)
